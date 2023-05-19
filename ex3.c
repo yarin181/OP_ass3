@@ -11,6 +11,7 @@ BoundedBuffer * createBoundedBuffer(int queueSize){
     sem_init(&newBoundedBuffer->mutex,0,1);
     newBoundedBuffer->firstIndex = 0;
     newBoundedBuffer->lastIndex = 0;
+    newBoundedBuffer->doneFlag =0;
     newBoundedBuffer->size = queueSize;
     return newBoundedBuffer;
 }
@@ -24,6 +25,7 @@ UnBoundedBuffer * createUnBoundedBuffer(){
     sem_init(&newUnBoundedBuffer->mutex,0,1);
     newUnBoundedBuffer->firstIndex = 0;
     newUnBoundedBuffer->lastIndex = 0;
+    newUnBoundedBuffer->doneFlag =0;
     return newUnBoundedBuffer;
 }
 
@@ -36,7 +38,19 @@ Producer *  createProducer(int id, int numberOfProducts, int queueSize){
     return newProducer;
 }
 
-///constructor of the dispatcher. (probably will not needed cause i maje it on the stack.)
+///constructor of the dispatcher.
+void initDispatcher(Dispatcher *dispatcher,UnBoundedBuffer ** boundedBuffersList){
+    dispatcher-> BoundedBuffersList = malloc(sizeof (BoundedBuffer *));
+    dispatcher->numberOfProducers = 0;
+    dispatcher->unBoundedBuffersList = boundedBuffersList;
+}
+
+///add a bounded buffer to the dispatcher list.
+void addBoundedBufferToDispatcher(Dispatcher * dispatcher ,BoundedBuffer *boundedBuffer){
+    dispatcher->numberOfProducers++;
+    dispatcher->BoundedBuffersList = realloc(dispatcher->BoundedBuffersList, sizeof (BoundedBuffer *) + 1 * dispatcher->numberOfProducers);
+    dispatcher->BoundedBuffersList[dispatcher->numberOfProducers -1] = boundedBuffer;
+}
 
 ///constructor for the CoEditors (each create unboundedList)
 void initCoEditor(CoEditor *coEditor,BoundedBuffer * screenManagerBuffer){
@@ -48,8 +62,6 @@ void initCoEditor(CoEditor *coEditor,BoundedBuffer * screenManagerBuffer){
 void initScreenManager(ScreenManager * screenManager, int queueSize){
     screenManager->boundedBuffer = createBoundedBuffer(queueSize);
 }
-
-/// function - add a bounded buffer to the Dispatcher Unbounded Buffer queue.(probably will not needed cause i add them on the main.)
 
 ///insertItem to a bounded buffer (critical section)
 void insertItemBounded(BoundedBuffer * boundedBuffer,char *news){
@@ -75,6 +87,7 @@ char * removeItemBounded(BoundedBuffer * boundedBuffer){
     return itemPtr;
 
 }
+
 ///function - remove a news from a bounded buffer.
 char * removeBounded(BoundedBuffer * boundedBuffer){
     char * itemPtr = NULL;
@@ -139,12 +152,68 @@ char * removeUnBounded(UnBoundedBuffer * unBoundedBuffer){
 }
 
 ///function for the screen manager that takes a News from his queue and print it to the screen.
+void screenManagerOperation(ScreenManager *screenManager){
+    int finishCounter = 0;
+    char * msg;
+    while( finishCounter != 3){
+        msg = removeBounded(screenManager->boundedBuffer);
+        if (!strcmp(msg,FINISH)){
+            finishCounter++;
+        }
+        else{
+            printf("%s",msg);
+        }
+    }
+}
+
+///find the appropriate co Editor based on a given string.
+int findCoEditor(const char * msg){
+    char str[20];
+    int wordCounter = 0;
+    strcpy(str,msg);
+    char* token = strtok(str, " \n");
+    while (token != NULL && wordCounter < 2){
+        token = strtok(NULL, " \n");
+        wordCounter++;
+    }
+    if(!strcmp(token,SPORTS)){
+        return 0;
+    }
+    if(!strcmp(token,NEWS)){
+        return 1;
+    }
+    if(!strcmp(token,WEATHER)){
+        return 2;
+    }
+    perror("findCoEditor ");
+    exit(-1);
+}
 
 ///function Dispatcher take a news from bounded queue and insert it to an appropriate unBounded queue.
+void dispatcherOperation(Dispatcher *dispatcher){
+    int finishCounter = 0;
+    char * msg;
+    int currentBufferIndex = 0;
+    BoundedBuffer * currentBuffer;
+    while (finishCounter != dispatcher->numberOfProducers){
+        currentBuffer = dispatcher->BoundedBuffersList[currentBufferIndex];
+        if (!currentBuffer->doneFlag){
+            /// in here the dispatcher takes exactly one msg per producer (check if need to change based on round robin).
+            msg = removeBounded(currentBuffer);
+            if (!strcmp(msg,FINISH)){
+                currentBuffer->doneFlag = 1;
+            }else{
+                insertItemUnBounded(dispatcher->unBoundedBuffersList[findCoEditor(msg)],msg);
+            }
+        }
+        currentBufferIndex = (currentBufferIndex + 1) % dispatcher->numberOfProducers;
 
-///function Dispatcher functionality read from each bounded queue in his queue list using Round robin until all of them are empty.
+    }
 
-///function Co-Editor remove a news from unbounded queue and insert it to the screen manager bounded queue (-1 when Done).
+}
+
+///function Co-Editor remove a news from unbounded queue and insert it to the screen manager bounded queue.
+
 
 ///function ScreenManager get news from his bounded queue and print them to the screen.
 

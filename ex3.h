@@ -1,18 +1,27 @@
 #ifndef OP_ASS3_EX3_H
 #define OP_ASS3_EX3_H
 
-#define CO_EDITOR_NUM 3
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
+
+
+#define CO_EDITOR_NUM 3
+#define FINISH "Done"
+#define SPORTS "SPORTS"
+#define NEWS "NEWS"
+#define WEATHER "WEATHER"
+
 //typedef struct {
 //    int id;
 //    int type;
 //    int index;
 //} News;
 typedef struct {
+    int doneFlag;
     int firstIndex;
     int lastIndex;
     int size;
@@ -23,6 +32,7 @@ typedef struct {
 } BoundedBuffer;
 
 typedef struct {
+    int doneFlag;
     int firstIndex;
     int lastIndex;
     int currentSize;
@@ -39,8 +49,8 @@ typedef struct{
 
 typedef struct {
     BoundedBuffer ** BoundedBuffersList;
-    UnBoundedBuffer * unBoundedBufferList[CO_EDITOR_NUM];
-
+    int numberOfProducers;
+    UnBoundedBuffer ** unBoundedBuffersList;
 }Dispatcher;
 
 typedef struct {
