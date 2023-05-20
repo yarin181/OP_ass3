@@ -164,6 +164,7 @@ void screenManagerOperation(ScreenManager *screenManager){
             printf("%s",msg);
         }
     }
+    //free screenManager allocations.
 }
 
 ///find the appropriate co Editor based on a given string.
@@ -207,18 +208,106 @@ void dispatcherOperation(Dispatcher *dispatcher){
             }
         }
         currentBufferIndex = (currentBufferIndex + 1) % dispatcher->numberOfProducers;
-
     }
+    insertUnBounded(dispatcher->unBoundedBuffersList[0],FINISH);
+    insertUnBounded(dispatcher->unBoundedBuffersList[1],FINISH);
+    insertUnBounded(dispatcher->unBoundedBuffersList[2],FINISH);
+    //free dispatcher alocations.
 
 }
 
 ///function Co-Editor remove a news from unbounded queue and insert it to the screen manager bounded queue.
+void CoEditorOperation(CoEditor *coEditor){
+    int finishFlag = 0;
+    char * msg;
+    while(!finishFlag){
+        sleep(1);
+        msg = removeUnBounded(coEditor->unBoundedBuffer);
+        if(!strcmp(msg,FINISH)){
+            insertBounded(coEditor->screenManagerBuffer,FINISH);
+            finishFlag = 1;
+        }
+        else{
+            insertBounded(coEditor->screenManagerBuffer,msg);
+        }
+    }
+    // free coEditor aloocations
 
+}
 
 ///function ScreenManager get news from his bounded queue and print them to the screen.
+void producerOperation(Producer *producer){
+    int numberOfProducts = producer->numberOfProducts;
+    int typeNumber = 0;
+    char *msg;
+    int sportNum = 0;
+    int newsNum = 0;
+    int weatherNum = 0;
+    for (int i=0 ;i<producer->numberOfProducts;i++){
+        msg = malloc(STRING_LEN*sizeof (char));
+        sleep(1);
+        typeNumber = rand() % 3;
+        if (typeNumber == 0){
+            sprintf(msg,"Producer %d %s %d",producer->id,SPORTS,sportNum);
+            sportNum++;
+        }
+        if (typeNumber == 1){
+            sprintf(msg,"Producer %d %s %d",producer->id,NEWS,newsNum);
+            newsNum++;
+        }
+        if (typeNumber == 2){
+            sprintf(msg,"Producer %d %s %d",producer->id,WEATHER,weatherNum);
+            weatherNum++;
+        }
+        else{
+            printf("error");
+            return;
+        }
+        insertBounded(producer->boundedBuffer,msg);
+        msg = NULL;
+    }
+}
 
+
+Producer ** initProducersList(char * fileName, int  * const coEditorQueueSize){
+    FILE *file;
+    int id, numberOfProducts, queueSize;
+    int numberOfProducers = 0;
+
+    file = fopen(fileName, "r");
+    if (file == NULL) {
+        printf("Failed to open\n");
+        return NULL;
+    }
+    while (fscanf(file, "%d\n%d\n%d\n",&id,&numberOfProducts,&queueSize) == 3) {
+        numberOfProducers;
+    }
+    fseek(file,0,SEEK_SET);
+    Producer ** tempList = malloc(sizeof (Producer *) * numberOfProducers);
+
+    for (int i=0;i < numberOfProducers;i++) {
+        fscanf(file, "%d\n", &id);
+        fscanf(file, "%d\n", &numberOfProducts);
+        fscanf(file, "%d\n", &queueSize);
+
+
+    }
+    if (fscanf(file, "%d", coEditorQueueSize) != 1) {
+        printf("error to get co editor queue num\n");
+    }
+    // Close the file
+    fclose(file);
+
+    return 0;
+
+
+}
 
 int main(int argc,char * argv[]) {
+    char * fileName = "config.txt";
+    int coEditorQueueSize;
+    Producer ** producersList = initProducersList(fileName,&coEditorQueueSize);
+
     ///open the conf file in argv[1](check open successfully)
     ///iterate over the file lines for each line create (except the last) create a producer.
     ///create three coEditors.

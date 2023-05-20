@@ -7,9 +7,11 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
+#include <unistd.h>
 
 
 #define CO_EDITOR_NUM 3
+#define STRING_LEN 20
 #define FINISH "Done"
 #define SPORTS "SPORTS"
 #define NEWS "NEWS"
