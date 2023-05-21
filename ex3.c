@@ -269,7 +269,7 @@ void producerOperation(Producer *producer){
 }
 
 
-Producer ** initProducersList(char * fileName, int  * const coEditorQueueSize){
+int readFile(char * fileName,Producer *** tempList,int  * const coEditorQueueSize,int * producersNum){
     FILE *file;
     int id, numberOfProducts, queueSize;
     int numberOfProducers = 0;
@@ -277,36 +277,51 @@ Producer ** initProducersList(char * fileName, int  * const coEditorQueueSize){
     file = fopen(fileName, "r");
     if (file == NULL) {
         printf("Failed to open\n");
-        return NULL;
+        return -1;
     }
     while (fscanf(file, "%d\n%d\n%d\n",&id,&numberOfProducts,&queueSize) == 3) {
-        numberOfProducers;
+        numberOfProducers++;
     }
+    *producersNum = numberOfProducers;
     fseek(file,0,SEEK_SET);
-    Producer ** tempList = malloc(sizeof (Producer *) * numberOfProducers);
+    *tempList = malloc(sizeof (Producer *) * numberOfProducers);
 
-    for (int i=0;i < numberOfProducers;i++) {
+    for (int i=0;i < numberOfProducers;i++) { //check for file here.
         fscanf(file, "%d\n", &id);
         fscanf(file, "%d\n", &numberOfProducts);
         fscanf(file, "%d\n", &queueSize);
-
-
+        (*tempList)[i]->id = id;
+        (*tempList)[i]->numberOfProducts =numberOfProducts;
+        (*tempList)[i]->boundedBuffer = createBoundedBuffer(queueSize);
     }
     if (fscanf(file, "%d", coEditorQueueSize) != 1) {
-        printf("error to get co editor queue num\n");
+        return -1;
     }
     // Close the file
     fclose(file);
 
     return 0;
-
+}
+int initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer **producersList,int *numberOfProducers){
 
 }
-
 int main(int argc,char * argv[]) {
     char * fileName = "config.txt";
-    int coEditorQueueSize;
-    Producer ** producersList = initProducersList(fileName,&coEditorQueueSize);
+    int coEditorQueueSize,numberOfProducers;
+    Producer ** producersList;
+    if(readFile(fileName,&producersList,&coEditorQueueSize,&numberOfProducers) == -1){
+        printf("error in read file");
+        return -1;
+    }
+    BoundedBuffer ** boundedBuffersList;
+    initBoundedBuffersList(&boundedBuffersList,producersList,&numberOfProducers);
+    CoEditor coEditor;
+    ScreenManager screenManager;
+    Dispatcher dispatcher;
+    initScreenManager(&screenManager,coEditorQueueSize);
+    initCoEditor(&coEditor,screenManager.boundedBuffer);
+    initDispatcher(&dispatcher,producersList);
+
 
     ///open the conf file in argv[1](check open successfully)
     ///iterate over the file lines for each line create (except the last) create a producer.
