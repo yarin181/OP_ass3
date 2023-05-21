@@ -8,7 +8,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <pthread.h>
 
 #define CO_EDITOR_NUM 3
 #define STRING_LEN 20
