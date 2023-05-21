@@ -22,6 +22,7 @@ UnBoundedBuffer * createUnBoundedBuffer(){
     newUnBoundedBuffer->NewsList = malloc(sizeof (char *) * newUnBoundedBuffer->currentSize);
     sem_init(&newUnBoundedBuffer->full,0,0);
     sem_init(&newUnBoundedBuffer->mutex,0,1);
+    newUnBoundedBuffer->doneFlag = 0;
     newUnBoundedBuffer->firstIndex = 0;
     newUnBoundedBuffer->lastIndex = 0;
     newUnBoundedBuffer->doneFlag =0;
@@ -99,18 +100,23 @@ char * removeBounded(BoundedBuffer * boundedBuffer){
 
 ///increase the newsList of unBounded buffer
 void increaseUnBoundedSize(UnBoundedBuffer *unBoundedBuffer){
-    unBoundedBuffer->currentSize *= 2;
-    char ** newBuffer = malloc(sizeof (char *) * unBoundedBuffer->currentSize);
+    unBoundedBuffer->currentSize *=2;
+    realloc(unBoundedBuffer->NewsList,sizeof (char *) *unBoundedBuffer->currentSize * 2);
+    /*
+     *
+
+    char ** newBuffer = malloc(sizeof (char *) * currSize * 2);
     int currentIndex = 0;
-    while (unBoundedBuffer->firstIndex != unBoundedBuffer->lastIndex){
+    while (unBoundedBuffer->firstIndex % currSize != unBoundedBuffer->lastIndex % currSize){
         newBuffer[currentIndex] = unBoundedBuffer->NewsList[unBoundedBuffer->firstIndex];
         currentIndex ++;
         unBoundedBuffer->firstIndex++;
     }
+    unBoundedBuffer->currentSize *= 2;
     unBoundedBuffer->lastIndex = currentIndex - 1;
     unBoundedBuffer->firstIndex = 0;
     free(unBoundedBuffer->NewsList);
-    unBoundedBuffer->NewsList =newBuffer;
+    unBoundedBuffer->NewsList = newBuffer;*/
 }
 
 /// insert an item from the buffer (critical section)
