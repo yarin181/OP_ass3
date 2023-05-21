@@ -157,11 +157,12 @@ void * screenManagerOperation(void *parm){
     char * msg;
     while( finishCounter != 3){
         msg = removeBounded(screenManager->boundedBuffer);
-        if (msg && !strcmp(msg,FINISH)){
+        if (!strcmp(msg,FINISH)){
             finishCounter++;
         }
         else{
-            printf("%s",msg);
+            fflush(stdout);
+            printf("%s\n",msg);
         }
     }
     //free screenManager allocations.
@@ -204,6 +205,7 @@ void * dispatcherOperation(void *parm){
             msg = removeBounded(currentBuffer);
             if (!strcmp(msg,FINISH)){
                 currentBuffer->doneFlag = 1;
+                finishCounter++;
             }else{
                 insertUnBounded(dispatcher->unBoundedBuffersList[findCoEditor(msg)],msg);
             }
@@ -223,7 +225,7 @@ void * coEditorOperation(void *param){
     int finishFlag = 0;
     char * msg;
     while(!finishFlag){
-        //sleep(1);
+        usleep(100000);
         msg = removeUnBounded(coEditor->unBoundedBuffer);
         if(!strcmp(msg,FINISH)){
             insertBounded(coEditor->screenManagerBuffer,FINISH);
@@ -239,7 +241,6 @@ void * coEditorOperation(void *param){
 
 ///function ScreenManager get news from his bounded queue and print them to the screen.
 void *producerOperation(void* parm){
-    printf("in producer operation");
     Producer * producer = (Producer *)parm;
     int numberOfProducts = producer->numberOfProducts;
     int typeNumber = 0;
@@ -248,6 +249,7 @@ void *producerOperation(void* parm){
     int newsNum = 0;
     int weatherNum = 0;
     for (int i=0 ;i<producer->numberOfProducts;i++){
+        usleep(10000);
         msg = malloc(STRING_LEN*sizeof (char));
         //sleep(1);
         typeNumber = rand() % 3;
@@ -316,7 +318,6 @@ void initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer *produ
 }
 
 int main(int argc,char * argv[]) {
-    printf("in main\n");
     char * fileName = "config.txt";
     int coEditorQueueSize,numberOfProducers;
     Producer * producersList;
@@ -340,8 +341,11 @@ int main(int argc,char * argv[]) {
 
     pthread_t* threads = (pthread_t*)malloc(numberOfProducers * sizeof(pthread_t));
     pthread_t disThread,SMThread,COSThread,COWThread,CONThread,producer;
-    if (pthread_create(&producer, NULL, producerOperation, &producersList[0]) != 0) {
-        exit(1);
+    for (int i=0;i<numberOfProducers;i++){
+        if (pthread_create(&threads[i], NULL, producerOperation, &producersList[i]) != 0) {
+            exit(1);
+    }
+
     }if (pthread_create(&disThread, NULL, dispatcherOperation, &dispatcher) != 0) {
         exit(1);
     }if (pthread_create(&COSThread, NULL, coEditorOperation , &coEditorS) != 0) {
@@ -355,13 +359,5 @@ int main(int argc,char * argv[]) {
     }
 
     pthread_join(SMThread,NULL);
-
-
-    ///activate all the producers( each in separate thread)
-    ///activate the dispatcher (in a thread)
-    ///activate the three co Editors.( in a thread)
-    ///activate the Screen Manager. (in a thread)
-    ///wait for the Screen manger thread to finish.
-
     return 0;
 }
