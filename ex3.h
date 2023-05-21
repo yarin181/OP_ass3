@@ -1,6 +1,6 @@
 #ifndef OP_ASS3_EX3_H
 #define OP_ASS3_EX3_H
-
+///yarin sason 318229143
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,16 +12,11 @@
 
 #define CO_EDITOR_NUM 3
 #define STRING_LEN 20
-#define FINISH "Done"
+#define FINISH "DONE"
 #define SPORTS "SPORTS"
 #define NEWS "NEWS"
 #define WEATHER "WEATHER"
 
-//typedef struct {
-//    int id;
-//    int type;
-//    int index;
-//} News;
 typedef struct {
     int doneFlag;
     int firstIndex;
@@ -63,15 +58,5 @@ typedef struct {
 typedef struct {
     BoundedBuffer *boundedBuffer;
 }ScreenManager;
-
-
-
-
-
-
-
-
-
-
 
 #endif //OP_ASS3_EX3_H

@@ -1,6 +1,5 @@
 #include "ex3.h"
-
-///constructor of News (id,type,index)
+///yarin sason 318229143
 
 ///construct of BoundedBuffer (size) return BoundedBuffer*
 BoundedBuffer * createBoundedBuffer(int queueSize){
@@ -28,7 +27,7 @@ UnBoundedBuffer * createUnBoundedBuffer(){
     newUnBoundedBuffer->doneFlag =0;
     return newUnBoundedBuffer;
 }
-
+/*
 ///constructor of producer (id , numberOfProducts,size) (create a bounded buffer)
 Producer *  createProducer(int id, int numberOfProducts, int queueSize){
     Producer * newProducer = malloc(sizeof (Producer));
@@ -38,18 +37,18 @@ Producer *  createProducer(int id, int numberOfProducts, int queueSize){
     return newProducer;
 }
 
-///constructor of the dispatcher.
-void initDispatcher(Dispatcher *dispatcher,BoundedBuffer ** BoundedBufferList,UnBoundedBuffer ** boundedBuffersList,int numberOfProducer){
-    dispatcher-> BoundedBuffersList = BoundedBufferList;
-    dispatcher->numberOfProducers = numberOfProducer;
-    dispatcher->unBoundedBuffersList = boundedBuffersList;
-}
-
 ///add a bounded buffer to the dispatcher list.
 void addBoundedBufferToDispatcher(Dispatcher * dispatcher ,BoundedBuffer *boundedBuffer){
     dispatcher->numberOfProducers++;
     dispatcher->BoundedBuffersList = realloc(dispatcher->BoundedBuffersList, sizeof (BoundedBuffer *) + 1 * dispatcher->numberOfProducers);
     dispatcher->BoundedBuffersList[dispatcher->numberOfProducers -1] = boundedBuffer;
+}
+*/
+///constructor of the dispatcher.
+void initDispatcher(Dispatcher *dispatcher,BoundedBuffer ** BoundedBufferList,UnBoundedBuffer ** boundedBuffersList,int numberOfProducer){
+    dispatcher-> BoundedBuffersList = BoundedBufferList;
+    dispatcher->numberOfProducers = numberOfProducer;
+    dispatcher->unBoundedBuffersList = boundedBuffersList;
 }
 
 ///constructor for the CoEditors (each create unboundedList)
@@ -163,9 +162,12 @@ void * screenManagerOperation(void *parm){
         else{
             fflush(stdout);
             printf("%s\n",msg);
+            free(msg);
+            msg = NULL;
         }
     }
-    //free screenManager allocations.
+    printf("%s\n",FINISH);
+    return NULL;
 }
 
 ///find the appropriate co Editor based on a given string.
@@ -215,7 +217,7 @@ void * dispatcherOperation(void *parm){
     insertUnBounded(dispatcher->unBoundedBuffersList[0],FINISH);
     insertUnBounded(dispatcher->unBoundedBuffersList[1],FINISH);
     insertUnBounded(dispatcher->unBoundedBuffersList[2],FINISH);
-    //free dispatcher alocations.
+    return NULL;
 
 }
 
@@ -242,8 +244,8 @@ void * coEditorOperation(void *param){
 ///function ScreenManager get news from his bounded queue and print them to the screen.
 void *producerOperation(void* parm){
     Producer * producer = (Producer *)parm;
-    int numberOfProducts = producer->numberOfProducts;
-    int typeNumber = 0;
+//    int numberOfProducts = producer->numberOfProducts;
+    int typeNumber;
     char *msg;
     int sportNum = 0;
     int newsNum = 0;
@@ -304,7 +306,6 @@ Producer * readFile(char * fileName,int  * const coEditorQueueSize,int * produce
     if (fscanf(file, "%d", coEditorQueueSize) != 1) {
         return NULL;
     }
-    // Close the file
     fclose(file);
 
     return tempList;
@@ -316,36 +317,63 @@ void initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer *produ
         (*boundedBuffersList)[i] = producersList[i].boundedBuffer;
     }
 }
+void freeBoundedBuffer(BoundedBuffer* boundedBuffer){
+    free(boundedBuffer->NewsList);
+    boundedBuffer->NewsList = NULL;
+    free(boundedBuffer);
+    boundedBuffer = NULL;
+}
+void freeProducers(Producer * producerList,int numOfProducers){
+    for(int i=0;i<numOfProducers;i++){
+        freeBoundedBuffer(producerList[i].boundedBuffer);
+        producerList[i].boundedBuffer =NULL;
+    }
+    free(producerList);
+    producerList =NULL;
+}
+
+void freeUnBoundedBuffer(UnBoundedBuffer * unBoundedBuffer){
+    free(unBoundedBuffer->NewsList);
+    unBoundedBuffer->NewsList = NULL;
+    free(unBoundedBuffer);
+    unBoundedBuffer = NULL;
+}
+
+void freeCoEditor(CoEditor coEditor){
+    freeUnBoundedBuffer(coEditor.unBoundedBuffer);
+    coEditor.unBoundedBuffer = NULL;
+}
+
+void freeScreenManager(ScreenManager screenManager){
+    freeBoundedBuffer(screenManager.boundedBuffer);
+}
 
 int main(int argc,char * argv[]) {
     char * fileName = "config.txt";
     int coEditorQueueSize,numberOfProducers;
     Producer * producersList;
-    CoEditor coEditorS;
-    CoEditor coEditorN;
-    CoEditor coEditorW;
+    CoEditor coEditorS,coEditorN,coEditorW;
     ScreenManager screenManager;
     Dispatcher dispatcher;
-    if(!(producersList = readFile(fileName,&coEditorQueueSize,&numberOfProducers))){
+    BoundedBuffer ** boundedBuffersList;
+    if(!(producersList = readFile(fileName,&coEditorQueueSize,&numberOfProducers))){//
         printf("error in read file");
         return -1;
     }
-    BoundedBuffer ** boundedBuffersList;
     initBoundedBuffersList(&boundedBuffersList,producersList,&numberOfProducers);
     initScreenManager(&screenManager,coEditorQueueSize);
     initCoEditor(&coEditorS,screenManager.boundedBuffer);
     initCoEditor(&coEditorN,screenManager.boundedBuffer);
     initCoEditor(&coEditorW,screenManager.boundedBuffer);
-    UnBoundedBuffer *unBoundedBufferList[3] = {coEditorS.unBoundedBuffer,coEditorN.unBoundedBuffer,coEditorW.unBoundedBuffer};
+    UnBoundedBuffer *unBoundedBufferList[CO_EDITOR_NUM] = {coEditorS.unBoundedBuffer,coEditorN.unBoundedBuffer,coEditorW.unBoundedBuffer};
     initDispatcher(&dispatcher,boundedBuffersList,unBoundedBufferList,numberOfProducers);
 
     pthread_t* threads = (pthread_t*)malloc(numberOfProducers * sizeof(pthread_t));
-    pthread_t disThread,SMThread,COSThread,COWThread,CONThread,producer;
+    pthread_t disThread,SMThread,COSThread,COWThread,CONThread;
     for (int i=0;i<numberOfProducers;i++){
         if (pthread_create(&threads[i], NULL, producerOperation, &producersList[i]) != 0) {
             exit(1);
     }
-
     }if (pthread_create(&disThread, NULL, dispatcherOperation, &dispatcher) != 0) {
         exit(1);
     }if (pthread_create(&COSThread, NULL, coEditorOperation , &coEditorS) != 0) {
@@ -357,7 +385,20 @@ int main(int argc,char * argv[]) {
     }if (pthread_create(&SMThread, NULL, screenManagerOperation, &screenManager) != 0) {
         exit(1);
     }
-
     pthread_join(SMThread,NULL);
+
+    //free all the producers (in producerList)
+    freeProducers(producersList,numberOfProducers);
+    //free boundedBufferList (in boundedBuffersList)
+    free(boundedBuffersList);
+    //free the co-editors
+    freeCoEditor(coEditorS);
+    freeCoEditor(coEditorN);
+    freeCoEditor(coEditorW);
+    //free screen-manager
+    freeScreenManager(screenManager);
+    //free threads
+    free(threads);
+
     return 0;
 }
