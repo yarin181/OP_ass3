@@ -317,12 +317,14 @@ void initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer *produ
         (*boundedBuffersList)[i] = producersList[i].boundedBuffer;
     }
 }
+
 void freeBoundedBuffer(BoundedBuffer* boundedBuffer){
     free(boundedBuffer->NewsList);
     boundedBuffer->NewsList = NULL;
     free(boundedBuffer);
     boundedBuffer = NULL;
 }
+
 void freeProducers(Producer * producerList,int numOfProducers){
     for(int i=0;i<numOfProducers;i++){
         freeBoundedBuffer(producerList[i].boundedBuffer);
@@ -349,7 +351,10 @@ void freeScreenManager(ScreenManager screenManager){
 }
 
 int main(int argc,char * argv[]) {
-    char * fileName = "config.txt";
+    if (argc < 2){
+        return -1;
+    }
+    char * fileName = argv[1];
     int coEditorQueueSize,numberOfProducers;
     Producer * producersList;
     CoEditor coEditorS,coEditorN,coEditorW;
