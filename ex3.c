@@ -119,8 +119,8 @@ void insertItemUnBounded(UnBoundedBuffer * unBoundedBuffer,char *news){
     if ((unBoundedBuffer->lastIndex + 1) % unBoundedBuffer->currentSize == unBoundedBuffer->firstIndex % unBoundedBuffer->currentSize){
         increaseUnBoundedSize(unBoundedBuffer);
     }
-    unBoundedBuffer->lastIndex =  (unBoundedBuffer->lastIndex + 1) % unBoundedBuffer->currentSize;
     unBoundedBuffer->NewsList[unBoundedBuffer->lastIndex] = news;
+    unBoundedBuffer->lastIndex =  (unBoundedBuffer->lastIndex + 1) % unBoundedBuffer->currentSize;
 }
 
 ///function - add a news to a unBounded buffer.
@@ -205,7 +205,7 @@ void * dispatcherOperation(void *parm){
             if (!strcmp(msg,FINISH)){
                 currentBuffer->doneFlag = 1;
             }else{
-                insertItemUnBounded(dispatcher->unBoundedBuffersList[findCoEditor(msg)],msg);
+                insertUnBounded(dispatcher->unBoundedBuffersList[findCoEditor(msg)],msg);
             }
         }
         currentBufferIndex = (currentBufferIndex + 1) % dispatcher->numberOfProducers;
@@ -316,6 +316,7 @@ void initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer *produ
 }
 
 int main(int argc,char * argv[]) {
+    printf("in main\n");
     char * fileName = "config.txt";
     int coEditorQueueSize,numberOfProducers;
     Producer * producersList;
