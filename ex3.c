@@ -101,7 +101,7 @@ char * removeBounded(BoundedBuffer * boundedBuffer){
 ///increase the newsList of unBounded buffer
 void increaseUnBoundedSize(UnBoundedBuffer *unBoundedBuffer){
     unBoundedBuffer->currentSize *=2;
-    realloc(unBoundedBuffer->NewsList,sizeof (char *) *unBoundedBuffer->currentSize * 2);
+    unBoundedBuffer->NewsList = realloc(unBoundedBuffer->NewsList,sizeof (char *) *unBoundedBuffer->currentSize * 2);
     /*
      *
 
