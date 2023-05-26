@@ -1,9 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
 LDFLAGS = -pthread
 
 ex3.out: ex3.c ex3.h
-	$(CC) $(CFLAGS) $(LDFLAGS) -o ex3.out ex3.c
+	$(CC) $(LDFLAGS) -o ex3.out ex3.c
 
 .PHONY: clean
 

@@ -9,9 +9,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <pthread.h>
 
 #define CO_EDITOR_NUM 3
-#define STRING_LEN 20
+#define STRING_LEN 60
+#define START_SIZE_UNBOUNDED 20
 #define FINISH "DONE"
 #define SPORTS "SPORTS"
 #define NEWS "NEWS"
