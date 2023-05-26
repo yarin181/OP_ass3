@@ -4,7 +4,15 @@
 ///construct of BoundedBuffer (size) return BoundedBuffer*
 BoundedBuffer * createBoundedBuffer(int queueSize){
     BoundedBuffer * newBoundedBuffer = malloc(sizeof(BoundedBuffer));
+    if(!newBoundedBuffer){
+        perror("Error in: malloc");
+        exit(1);
+    }
     newBoundedBuffer->NewsList = malloc(sizeof (char *)*queueSize);
+    if(!newBoundedBuffer->NewsList){
+        perror("Error in: malloc");
+        exit(1);
+    }
     sem_init(&newBoundedBuffer->empty,0,queueSize);
     sem_init(&newBoundedBuffer->full,0,0);
     sem_init(&newBoundedBuffer->mutex,0,1);
@@ -18,8 +26,16 @@ BoundedBuffer * createBoundedBuffer(int queueSize){
 ///construct of UnBoundedBuffer (size) return UnBoundedBuffer*
 UnBoundedBuffer * createUnBoundedBuffer(){
     UnBoundedBuffer * newUnBoundedBuffer = malloc(sizeof(UnBoundedBuffer));
+    if(!newUnBoundedBuffer){
+        perror("Error in: malloc");
+        exit(1);
+    }
     newUnBoundedBuffer->currentSize = START_SIZE_UNBOUNDED;
     newUnBoundedBuffer->NewsList = malloc(sizeof (char *) * newUnBoundedBuffer->currentSize);
+    if(!newUnBoundedBuffer->NewsList){
+        perror("Error in: malloc");
+        exit(1);
+    }
     sem_init(&newUnBoundedBuffer->full,0,0);
     sem_init(&newUnBoundedBuffer->mutex,0,1);
     newUnBoundedBuffer->doneFlag = 0;
@@ -85,6 +101,10 @@ char * removeBounded(BoundedBuffer * boundedBuffer){
 ///increase the newsList of unBounded buffer
 void increaseUnBoundedSize(UnBoundedBuffer *unBoundedBuffer){
     char ** newNewsList = malloc(sizeof (char *) * unBoundedBuffer->currentSize*2);
+    if(!newNewsList){
+        perror("Error in: malloc");
+        exit(1);
+    }
     for (int i=0; i<unBoundedBuffer->currentSize;i++){
         newNewsList[i] = unBoundedBuffer->NewsList[i];
     }
@@ -231,6 +251,10 @@ void *producerOperation(void* parm){
     int weatherNum = 0;
     for (int i=0 ;i<producer->numberOfProducts;i++){
         msg = malloc(STRING_LEN*sizeof (char));
+        if(!msg){
+            perror("Error in: malloc");
+            exit(1);
+        }
         typeNumber = rand() % 3;
         if (typeNumber == 0){
             snprintf(msg,STRING_LEN,"Producer %d %s %d",producer->id,SPORTS,sportNum);
@@ -271,6 +295,10 @@ Producer * readFile(char * fileName,int  * const coEditorQueueSize,int * produce
     *producersNum = numberOfProducers;
     fseek(file,0,SEEK_SET);
     Producer * tempList = malloc(sizeof (Producer) * numberOfProducers);
+    if(!tempList){
+        perror("Error in: malloc");
+        exit(1);
+    }
 
     for (int i=0;i < numberOfProducers;i++) { //check for file here.
         fscanf(file, "%d\n", &id);
@@ -290,6 +318,10 @@ Producer * readFile(char * fileName,int  * const coEditorQueueSize,int * produce
 
 void initBoundedBuffersList(BoundedBuffer *** boundedBuffersList,Producer *producersList,const int *numberOfProducers){
     *boundedBuffersList = malloc(sizeof (Producer *) * (*numberOfProducers));
+    if(!(*boundedBuffersList)){
+        perror("Error in: malloc");
+        exit(1);
+    }
     for (int i=0; i<*numberOfProducers;i++){
         (*boundedBuffersList)[i] = producersList[i].boundedBuffer;
     }
@@ -329,6 +361,7 @@ void freeScreenManager(ScreenManager screenManager){
 
 int main(int argc,char * argv[]) {
     if (argc < 2){
+        printf("Not enough arguments\n");
         return -1;
     }
     char * fileName = argv[1];
@@ -338,8 +371,7 @@ int main(int argc,char * argv[]) {
     ScreenManager screenManager;
     Dispatcher dispatcher;
     BoundedBuffer ** boundedBuffersList;
-    if(!(producersList = readFile(fileName,&coEditorQueueSize,&numberOfProducers))){//
-        printf("error in read file");
+    if(!(producersList = readFile(fileName,&coEditorQueueSize,&numberOfProducers))){
         return -1;
     }
     initBoundedBuffersList(&boundedBuffersList,producersList,&numberOfProducers);
@@ -351,6 +383,10 @@ int main(int argc,char * argv[]) {
     initDispatcher(&dispatcher,boundedBuffersList,unBoundedBufferList,numberOfProducers);
 
     pthread_t* threads = (pthread_t*)malloc(numberOfProducers * sizeof(pthread_t));
+    if(!threads){
+        perror("Error in: malloc");
+        exit(1);
+    }
     pthread_t disThread,SMThread,COSThread,COWThread,CONThread;
     for (int i=0;i<numberOfProducers;i++){
         if (pthread_create(&threads[i], NULL, producerOperation, &producersList[i]) != 0) {
