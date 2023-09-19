@@ -21,39 +21,8 @@ The simulation revolves around news broadcasting. Various types of stories are p
 ## System Design
 
 The system should be implemented based on the following diagram:
+<img width="416" alt="OS_Ass3_diagram" src="https://github.com/yarin181/OP_ass3/assets/90701490/5d752312-b111-42ab-b8a3-c8ef701cd3ce">
 
-```
-        +------------------+              +------------------+ 
-        |    Producer 1    |              |    Producer n    |
-        | (bounded queue) |      ....    | (bounded queue) | 
-        +--------+---------+              +--------+---------+
-                 |                                 |
-                 v                                 v
-                     +-------------------+
-                     |    Dispatcher     |
-                     |                   |
-                     +--------+----------+
-                              |
-          +---------+---------+---------+--------+
-          v                   v                  v
-+------------------+ +------------------+ +------------------+ 
-|  Co-Editor (S)   | |  Co-Editor (N)   | |  Co-Editor (W)   |
-| (unbounded queue)| | (unbounded queue)| | (unbounded queue)|
-+--------+---------+ +--------+---------+ +--------+---------+
-                              |            
-                              |
-                              v 
-  
-                     +-----------------+
-                     |  Screen Manager |
-                     | (bounded queue) |
-                     +--------+--------+
-                              |
-                              v
-                         +--------+
-                         | Stdout |
-                         +--------+
-```
 
 In this design, the Producers communicate with the Dispatcher through their individual bounded queues. The Dispatcher communicates with the Co-Editors via three unbounded queues, each corresponding to a different type of message. The Co-Editors communicate with the Screen Manager through a single
 
